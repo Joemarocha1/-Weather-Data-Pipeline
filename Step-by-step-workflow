@@ -1,0 +1,175 @@
+### **Project: Build a Weather Data Pipeline**
+
+Create an automated pipeline that collects real-time weather data, processes it, stores it in a **MySQL database**, and displays insights on a dashboard.
+
+---
+
+### **Tools & Technologies**
+
+- **Python** (for scripting)
+- **APIs** (Weatherbit API)
+- **SQL** (MySQL for storage)
+- **Pandas** (for data transformation)
+- **Docker** (optional, for containerizing the database)
+- **Metabase** (free visualization tool) or **Tableau Public**
+- **Microsoft Task Scheduler** (for scheduling)
+
+---
+
+### **Step-by-Step Plan**
+
+### **1. Data Ingestion (Extract)**
+
+- **Goal**: Fetch real-time weather data.
+- **Steps**:
+    - Sign up for a free API key (e.g., [Weatherbit API](https://www.weatherbit.io/api)).
+    - Write a Python script to pull data (temperature, humidity, etc.) for specific cities.
+    - Example code snippet:
+        
+        python
+        
+        Copy
+        
+        ```
+        import requests
+        import pandas as pd
+        
+        API_KEY = "your_api_key"
+        CITIES = ["London", "Katowice", "Warsaw"]
+        
+        def fetch_weather_data():
+            data = []
+            for city in CITIES:
+                url = f"https://api.weatherbit.io/v2.0/current?city={city}&key={API_KEY}&units=M"
+                response = requests.get(url).json()
+                if "data" in response:  # Check if the API response is valid
+                    weather = response["data"][0]  # Extract first item from "data" list
+                    data.append({
+                        "city": city,
+                        "temperature": weather["temp"],
+                        "humidity": weather["rh"],  # "rh" is relative humidity in Weatherbit API
+                        "timestamp": pd.Timestamp.now()
+                    })
+                else:
+                    print(f"Error fetching data for {city}: {response}")
+            return pd.DataFrame(data)
+        ```
+        
+
+---
+
+### **2. Data Transformation (Transform)**
+
+- **Goal**: Clean and structure raw data.
+- **Steps**:
+    - Use Pandas to handle missing values or format timestamps.
+    - Example:
+        
+        python
+        
+        Copy
+        
+        ```
+        def transform_data(df):
+            # Ensure numeric columns
+            df["temperature"] = pd.to_numeric(df["temperature"])
+            df["humidity"] = pd.to_numeric(df["humidity"])
+            return df
+        ```
+        
+
+---
+
+### **3. Data Storage (Load)**
+
+- **Goal**: Store processed data in a **MySQL database**.
+- **Steps**:
+    - Use MySQL for storage (scalable and widely used in production).
+    - Create a table to store weather data:
+        
+        sql
+        
+        Copy
+        
+        ```
+        CREATE TABLE weather (
+            city VARCHAR(50),
+            temperature FLOAT,
+            humidity FLOAT,
+            timestamp TIMESTAMP
+        );
+        ```
+        
+    - Use Python’s `sqlalchemy` to load data:
+        
+        python
+        
+        Copy
+        
+        ```
+        from sqlalchemy import create_engine
+        
+        # Replace with your MySQL connection details
+        username = 'root'
+        password = 'your_password'
+        host = '127.0.0.1'  # e.g., 'localhost'
+        database = 'weather_db'
+        
+        # Create a connection string for MySQL
+        connection_string = f"mysql+pymysql://{username}:{password}@{host}:3306/{database}"# Create the SQLAlchemy engine
+        engine = create_engine(connection_string)
+        
+        # Load the DataFrame into the MySQL table
+        df.to_sql("weather", engine, if_exists="append", index=False)
+        ```
+        
+
+---
+
+### **4. Automation**
+
+- **Goal**: Schedule the pipeline to run daily/hourly.
+- **Steps**:
+    - Use **Microsoft Task Scheduler** to run the script periodically.
+    - Steps to set up Task Scheduler:
+        1. Open Task Scheduler and click **Create Task**.
+        2. Set a name and description for the task.
+        3. Under the **Triggers** tab, create a new trigger to run the task at your desired frequency (e.g., daily or hourly).
+        4. Under the **Actions** tab, add an action to run the Python script:
+            - Program/script: `python` (or the full path to your Python executable, e.g., `C:\Python39\python.exe`).
+            - Add arguments: The path to your script (e.g., `C:\path\to\your_script.py`).
+        5. Save the task and test it.
+
+---
+
+### **5. Visualization (Optional)**
+
+- **Goal**: Create a dashboard to display trends.
+- **Steps**:
+    - Use **Metabase** (free) to connect to your MySQL database and build charts:
+        - Average temperature per city over time.
+        - Humidity vs. temperature scatter plots.
+    - Deploy Metabase locally or on a free cloud tier (e.g., Heroku).
+
+---
+
+### **What to Showcase in Your Portfolio**
+
+1. **GitHub Repository**:
+    - Code for ingestion, transformation, and loading.
+    - SQL scripts for table creation.
+    - Documentation ([README.md](http://readme.md/) explaining the project, setup steps, and tools used).
+2. **Screenshots/Demo**:
+    - Dashboard visuals.
+    - Example database queries.
+3. **Architecture Diagram**:
+    - Draw a simple flowchart of your pipeline (e.g., API → Python → MySQL → Dashboard).
+
+---
+
+### **Bonus: Expand the Project**
+
+- Add error handling/logging.
+- Use **Docker** to containerize the database and pipeline.
+- Ingest historical weather data and compare trends.
+- Deploy the pipeline on a cloud platform (AWS/Azure/GCP free tier).
